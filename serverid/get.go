@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"files.wooservers.com/sergey/go-common-utils/internal/globals"
+	"github.com/duratarskeyk/go-common-utils/internal/globals"
 )
 
 func Get(apiAddr, apiKey string) int {

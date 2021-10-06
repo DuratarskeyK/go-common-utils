@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"files.wooservers.com/sergey/go-common-utils/timeoutread"
+	"github.com/duratarskeyk/go-common-utils/timeoutread"
 )
 
 func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
