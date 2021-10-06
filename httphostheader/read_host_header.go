@@ -37,6 +37,10 @@ func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, 
 			}
 		}
 		buffer.WriteString(line)
+		// no more headers
+		if line == "\r\n" {
+			break
+		}
 		split := strings.SplitN(line, ":", 2)
 		if len(split) == 2 {
 			header := strings.TrimSpace(split[0])
@@ -53,6 +57,10 @@ func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, 
 	if n := r.Buffered(); n > 0 {
 		b, _ := r.Peek(n)
 		buffer.Write(b)
+	}
+
+	if hostname == "" {
+		return "", ErrNoHostHeader
 	}
 
 	return hostname, nil
