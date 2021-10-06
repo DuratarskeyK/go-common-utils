@@ -1,3 +1,3 @@
-module files.wooservers.com/sergey/go-common-utils
+module github.com/duratarskeyk/go-common-utils
 
 go 1.17
