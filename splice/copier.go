@@ -9,140 +9,107 @@ import (
 
 // Copier makes a 2 way data transfer between Conn1 and Conn2
 type Copier struct {
-	GlobalStop   chan bool
-	Conn1ToConn2 int64
-	Conn2ToConn1 int64
+	Done         <-chan struct{}
+	doneInternal chan struct{}
 
-	stopChan    chan bool
-	once        chan bool
+	bytesTransferred [2]int64
+
+	timeoutDuration time.Duration
+
+	once        chan struct{}
 	returnError error
 }
 
-const (
-	connIdle uint = iota
-	connTraffic
-	connEOF
-)
+func (bc *Copier) Start(conn1 *net.TCPConn, conn2 *net.TCPConn, idleTimeout uint) (int64, int64, error) {
+	bc.bytesTransferred[0], bc.bytesTransferred[1] = 0, 0
 
-// Start initiates copying and blocks
-func (bc *Copier) Start(conn1 *net.TCPConn, conn2 *net.TCPConn, timeoutSec uint) error {
-	timeoutCnt, timeoutDuration := getCountAndDuration(timeoutSec)
+	var timeoutCnt uint
+	timeoutCnt, bc.timeoutDuration = getCountAndDuration(idleTimeout)
 
-	bc.stopChan = make(chan bool)
-	bc.once = make(chan bool, 1)
-	bc.once <- true
+	bc.doneInternal = make(chan struct{})
 	bc.returnError = nil
 
-	timeoutChan1 := make(chan uint)
-	timeoutChan2 := make(chan uint)
+	bc.once = make(chan struct{}, 1)
+	bc.once <- struct{}{}
 
-	go bc.copySrcToDst(conn1, conn2, timeoutDuration, timeoutChan1, &bc.Conn1ToConn2)
-	go bc.copySrcToDst(conn2, conn1, timeoutDuration, timeoutChan2, &bc.Conn2ToConn1)
+	conn1StatusChan := make(chan bool)
+	conn2StatusChan := make(chan bool)
+
+	go bc.srcToDst(conn1, conn2, conn1StatusChan, 0)
+	go bc.srcToDst(conn2, conn1, conn2StatusChan, 1)
 
 	var conn1Cnt, conn2Cnt uint
-	var conn1EOF, conn2EOF bool
 loop:
 	for {
-		if conn1EOF && conn2EOF {
+		select {
+		case <-bc.doneInternal:
+			break loop
+		case <-bc.Done:
+			bc.stop(nil)
+			break loop
+		case idle, ok := <-conn1StatusChan:
+			if !ok {
+				break loop
+			} else if idle {
+				conn1Cnt++
+			} else {
+				conn1Cnt = 0
+			}
+		case idle, ok := <-conn2StatusChan:
+			if !ok {
+				break loop
+			} else if idle {
+				conn2Cnt++
+			} else {
+				conn2Cnt = 0
+			}
+		}
+		if conn1Cnt >= timeoutCnt && conn2Cnt >= timeoutCnt {
+			bc.stop(os.ErrDeadlineExceeded)
+			break loop
+		}
+	}
+
+	conn1.Close()
+	conn2.Close()
+
+	for {
+		_, ok1 := <-conn1StatusChan
+		_, ok2 := <-conn2StatusChan
+		if !(ok1 || ok2) {
 			break
 		}
-		select {
-		case <-bc.stopChan:
-			break loop
-		case <-bc.GlobalStop:
-			break loop
-		case b := <-timeoutChan1:
-			switch b {
-			case connIdle:
-				conn1Cnt++
-				if (conn1EOF || conn1Cnt >= timeoutCnt) && (conn2EOF || conn2Cnt >= timeoutCnt) {
-					bc.stop(os.ErrDeadlineExceeded)
-					break loop
-				}
-			case connTraffic:
-				conn1Cnt = 0
-			case connEOF:
-				conn1EOF = true
-				conn1Cnt = 0
-			}
-		case b := <-timeoutChan2:
-			switch b {
-			case connIdle:
-				conn2Cnt++
-				if (conn1EOF || conn1Cnt >= timeoutCnt) && (conn2EOF || conn2Cnt >= timeoutCnt) {
-					bc.stop(os.ErrDeadlineExceeded)
-					break loop
-				}
-			case connTraffic:
-				conn2Cnt = 0
-			case connEOF:
-				conn2EOF = true
-				conn2Cnt = 0
-			}
-		}
 	}
 
-	return bc.returnError
+	return bc.bytesTransferred[0], bc.bytesTransferred[1], bc.returnError
 }
 
-func (bc *Copier) copySrcToDst(
-	src *net.TCPConn,
-	dst *net.TCPConn,
-	timeoutDuration time.Duration,
-	timeoutChan chan<- uint,
-	byteCount *int64,
-) {
+func (bc *Copier) srcToDst(src *net.TCPConn, dst *net.TCPConn, connStatusChan chan<- bool, pos int) {
 loop:
 	for {
+		src.SetReadDeadline(time.Now().Add(bc.timeoutDuration))
+		n, err := dst.ReadFrom(src)
+		bc.bytesTransferred[pos] += n
+		if err == nil || !errors.Is(err, os.ErrDeadlineExceeded) {
+			bc.stop(err)
+			break
+		}
+
 		select {
-		case <-bc.stopChan:
+		case connStatusChan <- n == 0:
+		case <-bc.doneInternal:
 			break loop
-		case <-bc.GlobalStop:
-			break loop
-		default:
-			src.SetReadDeadline(time.Now().Add(timeoutDuration))
-			n, err := dst.ReadFrom(src)
-			*byteCount += n
-			if err == nil {
-				select {
-				case <-bc.stopChan:
-				case <-bc.GlobalStop:
-				case timeoutChan <- connEOF:
-				}
-				break loop
-			}
-
-			if !errors.Is(err, os.ErrDeadlineExceeded) {
-				bc.stop(err)
-				break loop
-			}
-
-			snd := connTraffic
-			if n == 0 {
-				snd = connIdle
-			}
-
-			select {
-			case <-bc.GlobalStop:
-				break loop
-			case <-bc.stopChan:
-				break loop
-			case timeoutChan <- snd:
-			}
 		}
 	}
 
-	// We close dst write and src read, because src has eoffed or errored,
-	// so no more data will be read from src and written to dst
-	src.CloseRead()
-	dst.CloseWrite()
+	close(connStatusChan)
 }
 
 func (bc *Copier) stop(err error) {
 	select {
 	case <-bc.once:
 		bc.returnError = err
-		close(bc.stopChan)
+		close(bc.doneInternal)
 	default:
 	}
 }

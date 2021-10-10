@@ -6,6 +6,10 @@ func getCountAndDuration(timeoutSec uint) (uint, time.Duration) {
 	var timeoutCnt uint
 	var timeoutDuration time.Duration
 
+	if timeoutSec == 0 {
+		return 1, time.Hour * 24 * 30
+	}
+
 	if timeoutSec > 0 {
 		if timeoutSec <= 20 {
 			timeoutCnt = timeoutSec

@@ -14,11 +14,7 @@ func GetCopier() *Copier {
 }
 
 func PutCopier(splicer *Copier) {
-	splicer.GlobalStop = nil
-	splicer.Conn1ToConn2 = 0
-	splicer.Conn2ToConn1 = 0
-
-	splicer.stopChan = nil
+	splicer.doneInternal, splicer.Done = nil, nil
 	splicer.once = nil
 	splicer.returnError = nil
 
