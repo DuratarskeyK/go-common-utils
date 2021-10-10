@@ -1,4 +1,4 @@
-package timeoutread
+package idlenet
 
 import (
 	"errors"
@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-var nilTime time.Time
+var zeroTime time.Time
 
 func ReadWithTimeout(conn net.Conn, timeout time.Duration, p []byte) (int, error) {
 	total := len(p)
 	pos := 0
-	defer conn.SetReadDeadline(nilTime)
+	defer conn.SetReadDeadline(zeroTime)
 	for {
 		conn.SetReadDeadline(time.Now().Add(timeout))
 		n, err := conn.Read(p[pos:])

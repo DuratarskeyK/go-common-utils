@@ -4,12 +4,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/duratarskeyk/go-common-utils/timeoutread"
+	"github.com/duratarskeyk/go-common-utils/idlenet"
 )
 
 func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	header := make([]byte, tlsHeaderLen)
-	_, err := timeoutread.ReadWithTimeout(conn, timeout, header)
+	_, err := idlenet.ReadWithTimeout(conn, timeout, header)
 	if err != nil {
 		return "", nil, err
 	}
@@ -35,7 +35,7 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	for i := 0; i < tlsHeaderLen; i++ {
 		data[i] = header[i]
 	}
-	n, err := timeoutread.ReadWithTimeout(conn, timeout, data[tlsHeaderLen:])
+	n, err := idlenet.ReadWithTimeout(conn, timeout, data[tlsHeaderLen:])
 	dataLen := uint(n) + tlsHeaderLen
 	if err != nil {
 		return "", nil, err
