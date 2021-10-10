@@ -13,8 +13,12 @@ import (
 
 var ErrNoHostHeader = errors.New("no host header present in the initial request")
 
+var zeroTime time.Time
+
 func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, limit int64) (string, error) {
 	r := bufio.NewReader(io.LimitReader(conn, limit))
+
+	defer conn.SetReadDeadline(zeroTime)
 
 	var hostname string
 	for {
