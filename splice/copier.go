@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Copier makes a 2 way data transfer between Conn1 and Conn2
 type Copier struct {
 	Done         <-chan struct{}
 	doneInternal chan struct{}
