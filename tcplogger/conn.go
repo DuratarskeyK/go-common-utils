@@ -64,7 +64,7 @@ func (lc *conn) send(data []byte) {
 			}
 		}
 	}
-	if !errors.Is(err, os.ErrDeadlineExceeded) {
+	if err != nil && !errors.Is(err, os.ErrDeadlineExceeded) {
 		lc.conn.Close()
 		lc.conn = nil
 	}
