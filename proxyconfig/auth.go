@@ -24,3 +24,9 @@ func (c *Config) CredentialsAuth(proxyIP, username, password string) (bool, int)
 	}
 	return false, 0
 }
+
+func (c *Config) AllAccessAuth(username, password string) bool {
+	credentials := username + ":" + password
+	_, ok := c.allAccess[credentials]
+	return ok
+}
