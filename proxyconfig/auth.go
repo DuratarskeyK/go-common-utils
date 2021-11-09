@@ -11,9 +11,6 @@ func (c *Config) IPAuth(proxyIP, userIP string) (bool, int) {
 
 func (c *Config) CredentialsAuth(proxyIP, username, password string) (bool, int) {
 	credentials := username + ":" + password
-	if credentials == c.backconnectUser || credentials == c.checkerUser {
-		return true, 0
-	}
 	if _, ok := c.allAccess[credentials]; ok {
 		return true, 0
 	}
