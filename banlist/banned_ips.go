@@ -76,8 +76,8 @@ func (b *BannedIPs) realStart() {
 }
 
 func (b *BannedIPs) IsBanned(ip string) bool {
-	b.guard.RLock()
-	defer b.guard.RUnlock()
+	b.guard.Lock()
+	defer b.guard.Unlock()
 	return b.isBannedInternal(ip)
 }
 
