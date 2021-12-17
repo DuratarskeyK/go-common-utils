@@ -3,6 +3,7 @@ package proxyconfig
 import (
 	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/duratarskeyk/go-common-utils/iphostacl"
 )
@@ -14,6 +15,10 @@ type Config struct {
 	PackageIDsToUserIDs map[int]int
 
 	IPHostACL *iphostacl.Acl
+
+	userPackageAllowedTCPPorts        map[int][][2]uint16
+	backconnectPackageAllowedTCPPorts map[int][][2]uint16
+	userAllowedTCPPorts               map[int][][2]uint16
 
 	ipToCredentials map[string]map[string]int
 	ipToAllowedIPs  map[string]map[string]int
@@ -28,6 +33,10 @@ type configJSON struct {
 	AllAccess       map[string]bool           `json:"all_access"`
 
 	PackageIDsToUserIDs map[string]int `json:"package_ids_to_user_ids"`
+
+	UserPackageAllowedTCPPorts        map[string]string `json:"user_package_allowed_tcp_ports"`
+	BackconnectPackageAllowedTCPPorts map[string]string `json:"backconnect_package_allowed_tcp_ports"`
+	UserAllowedTCPPorts               map[string]string `json:"user_allowed_tcp_ports"`
 
 	IPHostACL *iphostacl.Acl `json:"graylist"`
 }
@@ -52,5 +61,31 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 		c.PackageIDsToUserIDs[intK] = v
 	}
 
+	c.userPackageAllowedTCPPorts = getPortRanges(cj.UserPackageAllowedTCPPorts)
+	c.backconnectPackageAllowedTCPPorts = getPortRanges(cj.BackconnectPackageAllowedTCPPorts)
+	c.userAllowedTCPPorts = getPortRanges(cj.UserAllowedTCPPorts)
+
 	return nil
+}
+
+func getPortRanges(ports map[string]string) map[int][][2]uint16 {
+	res := make(map[int][][2]uint16)
+	for id, allowedPorts := range ports {
+		idInt, _ := strconv.Atoi(id)
+		res[idInt] = make([][2]uint16, 0)
+		ranges := strings.Split(allowedPorts, ",")
+		for _, r := range ranges {
+			if strings.IndexByte(r, '-') != -1 {
+				tmp := strings.Split(r, "-")
+				start, _ := strconv.Atoi(tmp[0])
+				end, _ := strconv.Atoi(tmp[1])
+				res[idInt] = append(res[idInt], [2]uint16{uint16(start), uint16(end)})
+			} else {
+				start, _ := strconv.Atoi(r)
+				res[idInt] = append(res[idInt], [2]uint16{uint16(start), uint16(start)})
+			}
+		}
+	}
+
+	return res
 }
