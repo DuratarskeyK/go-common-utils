@@ -9,10 +9,13 @@ import (
 )
 
 type Config struct {
+	ServerName string
+
 	BackconnectUser string
 	CheckerUser     string
 
 	PackageIDsToUserIDs map[int]int
+	UserIDToEmail       map[int]string
 
 	IPHostACL *iphostacl.Acl
 
@@ -26,13 +29,16 @@ type Config struct {
 }
 
 type configJSON struct {
+	ServerName string `json:"server_name"`
+
 	IPToCredentials map[string]map[string]int `json:"ips_to_credentials"`
 	IPToAllowedIPs  map[string]map[string]int `json:"ips_to_authorized_ips"`
 	BackconnectUser string                    `json:"backconnect_user"`
 	CheckerUser     string                    `json:"checker_user"`
 	AllAccess       map[string]bool           `json:"all_access"`
 
-	PackageIDsToUserIDs map[string]int `json:"package_ids_to_user_ids"`
+	PackageIDsToUserIDs map[string]int    `json:"package_ids_to_user_ids"`
+	UserIDToEmail       map[string]string `json:"user_id_to_email"`
 
 	UserPackageAllowedTCPPorts        map[string]string `json:"user_package_allowed_tcp_ports"`
 	BackconnectPackageAllowedTCPPorts map[string]string `json:"backconnect_package_allowed_tcp_ports"`
@@ -47,6 +53,8 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
+	c.ServerName = cj.ServerName
+
 	c.BackconnectUser = cj.BackconnectUser
 	c.CheckerUser = cj.CheckerUser
 
@@ -59,6 +67,11 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	for k, v := range cj.PackageIDsToUserIDs {
 		intK, _ := strconv.Atoi(k)
 		c.PackageIDsToUserIDs[intK] = v
+	}
+	c.UserIDToEmail = make(map[int]string)
+	for k, v := range cj.UserIDToEmail {
+		intK, _ := strconv.Atoi(k)
+		c.UserIDToEmail[intK] = v
 	}
 
 	c.userPackageAllowedTCPPorts = getPortRanges(cj.UserPackageAllowedTCPPorts)
