@@ -14,8 +14,9 @@ type Config struct {
 	BackconnectUser string
 	CheckerUser     string
 
-	PackageIDsToUserIDs map[int]int
-	UserIDToEmail       map[int]string
+	PackageIDsToUserIDs         map[int]int
+	UserIDToEmail               map[int]string
+	UserPackageConnectionsLimit map[int]int
 
 	IPHostACL *iphostacl.Acl
 
@@ -37,8 +38,9 @@ type configJSON struct {
 	CheckerUser     string                    `json:"checker_user"`
 	AllAccess       map[string]bool           `json:"all_access"`
 
-	PackageIDsToUserIDs map[string]int    `json:"package_ids_to_user_ids"`
-	UserIDToEmail       map[string]string `json:"user_id_to_email"`
+	PackageIDsToUserIDs         map[string]int    `json:"package_ids_to_user_ids"`
+	UserIDToEmail               map[string]string `json:"user_id_to_email"`
+	UserPackageConnectionsLimit map[string]int    `json:"user_package_connection_limits"`
 
 	UserPackageAllowedTCPPorts        map[string]string `json:"user_package_allowed_tcp_ports"`
 	BackconnectPackageAllowedTCPPorts map[string]string `json:"backconnect_package_allowed_tcp_ports"`
@@ -72,6 +74,11 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	for k, v := range cj.UserIDToEmail {
 		intK, _ := strconv.Atoi(k)
 		c.UserIDToEmail[intK] = v
+	}
+	c.UserPackageConnectionsLimit = make(map[int]int)
+	for k, v := range cj.UserPackageConnectionsLimit {
+		intK, _ := strconv.Atoi(k)
+		c.UserPackageConnectionsLimit[intK] = v
 	}
 
 	c.userPackageAllowedTCPPorts = getPortRanges(cj.UserPackageAllowedTCPPorts)
