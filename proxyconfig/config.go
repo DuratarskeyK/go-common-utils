@@ -16,7 +16,7 @@ type Config struct {
 
 	PackageIDsToUserIDs         map[int]int
 	UserIDToEmail               map[int]string
-	UserPackageConnectionsLimit map[int]int
+	UserPackageConnectionsLimit map[int]uint
 
 	IPHostACL *iphostacl.Acl
 
@@ -40,7 +40,7 @@ type configJSON struct {
 
 	PackageIDsToUserIDs         map[string]int    `json:"package_ids_to_user_ids"`
 	UserIDToEmail               map[string]string `json:"user_id_to_email"`
-	UserPackageConnectionsLimit map[string]int    `json:"user_package_connection_limits"`
+	UserPackageConnectionsLimit map[string]uint   `json:"user_package_connection_limits"`
 
 	UserPackageAllowedTCPPorts        map[string]string `json:"user_package_allowed_tcp_ports"`
 	BackconnectPackageAllowedTCPPorts map[string]string `json:"backconnect_package_allowed_tcp_ports"`
@@ -75,7 +75,7 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 		intK, _ := strconv.Atoi(k)
 		c.UserIDToEmail[intK] = v
 	}
-	c.UserPackageConnectionsLimit = make(map[int]int)
+	c.UserPackageConnectionsLimit = make(map[int]uint)
 	for k, v := range cj.UserPackageConnectionsLimit {
 		intK, _ := strconv.Atoi(k)
 		c.UserPackageConnectionsLimit[intK] = v
