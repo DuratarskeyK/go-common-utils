@@ -15,7 +15,7 @@ var ErrNoHostHeader = errors.New("no host header present in the initial request"
 
 var zeroTime time.Time
 
-func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, limit int64) (string, error) {
+func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, limit int64, keepPort bool) (string, error) {
 	r := bufio.NewReader(io.LimitReader(conn, limit))
 
 	defer conn.SetReadDeadline(zeroTime)
@@ -50,8 +50,10 @@ func ReadHostHeader(conn net.Conn, buffer *bytes.Buffer, timeout time.Duration, 
 			header := strings.TrimSpace(split[0])
 			if strings.ToLower(header) == "host" {
 				hostname = strings.TrimSpace(split[1])
-				if pos := strings.IndexByte(hostname, ':'); pos != -1 {
-					hostname = hostname[:pos]
+				if !keepPort {
+					if pos := strings.IndexByte(hostname, ':'); pos != -1 {
+						hostname = hostname[:pos]
+					}
 				}
 				break
 			}
