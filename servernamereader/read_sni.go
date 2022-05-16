@@ -15,7 +15,7 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	}
 
 	if (header[0]&0x80) > 0 && header[2] == 1 {
-		return "", nil, ErrSSL2
+		return "", header, ErrSSL2
 	}
 
 	tlsContentType := header[0]
@@ -67,7 +67,7 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	pos += 1 + len
 
 	if pos == dataLen && tlsVersionMajor == 3 && tlsVersionMinor == 0 {
-		return "", nil, ErrSSL3NoExtensions
+		return "", data, ErrSSL3NoExtensions
 	}
 
 	if pos+2 > dataLen {
@@ -82,7 +82,7 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 
 	hostname, err := parseExtensions(data[pos:], len)
 	if err != nil {
-		return "", nil, err
+		return "", data, err
 	}
 
 	return hostname, data, nil
