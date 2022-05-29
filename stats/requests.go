@@ -43,6 +43,7 @@ func (hc *RequestsReporter) Start() {
 		return
 	}
 	hc.started = true
+	hc.counters = make(map[string]*PackageMetrics)
 	hc.closeCh = make(chan struct{})
 
 	sleepTime := time.Duration(hc.ReportInterval) * time.Minute
