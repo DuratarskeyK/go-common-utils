@@ -20,14 +20,14 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 
 	tlsContentType := header[0]
 	if tlsContentType != tlsHandshakeContentType {
-		return "", nil, ErrNotTLSHandshake
+		return "", header, ErrNotTLSHandshake
 	}
 
 	tlsVersionMajor := header[1]
 	tlsVersionMinor := header[2]
 
 	if tlsVersionMajor < 3 {
-		return "", nil, ErrBadTLSVersion
+		return "", header, ErrBadTLSVersion
 	}
 
 	packetLength := (uint(header[3]) << 8) | (uint(header[4]))
@@ -43,25 +43,25 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	var pos uint = tlsHeaderLen
 
 	if data[pos] != tlsHandshakeTypeClientHello {
-		return "", nil, ErrNotTLSHello
+		return "", data, ErrNotTLSHello
 	}
 
 	pos += 38
 
 	if pos+1 > dataLen {
-		return "", nil, ErrNoSNI
+		return "", data, ErrNoSNI
 	}
 	len := uint(data[pos])
 	pos += 1 + len
 
 	if pos+2 > dataLen {
-		return "", nil, ErrNoSNI
+		return "", data, ErrNoSNI
 	}
 	len = (uint(data[pos]) << 8) | uint(data[pos+1])
 	pos += 2 + len
 
 	if pos+1 > dataLen {
-		return "", nil, ErrNoSNI
+		return "", data, ErrNoSNI
 	}
 	len = uint(data[pos])
 	pos += 1 + len
@@ -71,13 +71,13 @@ func ReadSNI(conn net.Conn, timeout time.Duration) (string, []byte, error) {
 	}
 
 	if pos+2 > dataLen {
-		return "", nil, ErrNoSNI
+		return "", data, ErrNoSNI
 	}
 	len = (uint(data[pos]) << 8) | uint(data[pos+1])
 	pos += 2
 
 	if pos+len > dataLen {
-		return "", nil, ErrNoSNI
+		return "", data, ErrNoSNI
 	}
 
 	hostname, err := parseExtensions(data[pos:], len)
