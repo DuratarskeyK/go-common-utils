@@ -14,7 +14,11 @@ type Config struct {
 	BackconnectUser string
 	CheckerUser     string
 
-	PackageIDsToUserIDs         map[int]int
+	allAccess           map[string]bool
+	ipToCredentials     map[string]map[string]int
+	ipToAllowedIPs      map[string]map[string]int
+	packageIDsToUserIDs map[int]int
+
 	UserIDToEmail               map[int]string
 	UserPackageConnectionsLimit map[int]uint
 	UserPackageAllowUDP         map[int]bool
@@ -24,10 +28,6 @@ type Config struct {
 	userPackageAllowedTCPPorts        map[int][][2]uint16
 	backconnectPackageAllowedTCPPorts map[int][][2]uint16
 	userAllowedTCPPorts               map[int][][2]uint16
-
-	ipToCredentials map[string]map[string]int
-	ipToAllowedIPs  map[string]map[string]int
-	allAccess       map[string]bool
 }
 
 type configJSON struct {
@@ -67,10 +67,10 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 	c.allAccess = cj.AllAccess
 
 	c.IPHostACL = cj.IPHostACL
-	c.PackageIDsToUserIDs = make(map[int]int)
+	c.packageIDsToUserIDs = make(map[int]int)
 	for k, v := range cj.PackageIDsToUserIDs {
 		intK, _ := strconv.Atoi(k)
-		c.PackageIDsToUserIDs[intK] = v
+		c.packageIDsToUserIDs[intK] = v
 	}
 	c.UserIDToEmail = make(map[int]string)
 	for k, v := range cj.UserIDToEmail {

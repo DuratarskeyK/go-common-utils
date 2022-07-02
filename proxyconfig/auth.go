@@ -1,29 +1,45 @@
 package proxyconfig
 
-func (c *Config) IPAuth(proxyIP, userIP string) (bool, int) {
-	if p, ok := c.ipToAllowedIPs[proxyIP]; ok {
-		if packageID, ok := p[userIP]; ok {
-			return true, packageID
-		}
-	}
-	return false, 0
+type AuthResult struct {
+	SystemUser  bool
+	Backconnect bool
+	PackageID   int
+	UserID      int
 }
 
-func (c *Config) CredentialsAuth(proxyIP, username, password string) (bool, int) {
-	credentials := username + ":" + password
-	if _, ok := c.allAccess[credentials]; ok {
-		return true, 0
-	}
-	if val, ok := c.ipToCredentials[proxyIP]; ok {
-		if id, ok := val[credentials]; ok {
-			return true, id
+func (c *Config) IPAuth(proxyIP, userIP string) *AuthResult {
+	if packageID, ok := c.ipToAllowedIPs[proxyIP][userIP]; ok {
+		return &AuthResult{
+			SystemUser:  false,
+			Backconnect: false,
+			PackageID:   packageID,
+			UserID:      c.packageIDsToUserIDs[packageID],
 		}
 	}
-	return false, 0
+	return nil
+}
+
+func (c *Config) CredentialsAuth(proxyIP, username, password string) *AuthResult {
+	credentials := username + ":" + password
+	if _, ok := c.allAccess[credentials]; ok {
+		return &AuthResult{
+			SystemUser:  credentials != c.BackconnectUser,
+			Backconnect: credentials == c.BackconnectUser,
+			PackageID:   0,
+			UserID:      0,
+		}
+	}
+	if packageID, ok := c.ipToCredentials[proxyIP][credentials]; ok {
+		return &AuthResult{
+			SystemUser:  false,
+			Backconnect: false,
+			PackageID:   packageID,
+			UserID:      c.packageIDsToUserIDs[packageID],
+		}
+	}
+	return nil
 }
 
 func (c *Config) AllAccessAuth(username, password string) bool {
-	credentials := username + ":" + password
-	_, ok := c.allAccess[credentials]
-	return ok
+	return c.allAccess[username+":"+password]
 }
