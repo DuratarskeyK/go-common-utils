@@ -3,39 +3,31 @@ package proxyconfig
 import "github.com/duratarskeyk/go-common-utils/authorizer"
 
 func (c *Config) IPAuth(proxyIP, userIP string) authorizer.AuthResult {
-	if packageID, ok := c.ipToAllowedIPs[proxyIP][userIP]; ok {
+	if packageID := c.ipToAllowedIPs[proxyIP][userIP]; packageID != 0 {
 		return authorizer.AuthResult{
-			OK:          true,
-			SystemUser:  false,
-			Backconnect: false,
-			PackageID:   packageID,
-			UserID:      c.packageIDsToUserIDs[packageID],
+			OK:        true,
+			PackageID: packageID,
+			UserID:    c.packageIDsToUserIDs[packageID],
 		}
 	}
-	return authorizer.BadAuth
+	return authorizer.BadAuthResult
 }
 
 func (c *Config) CredentialsAuth(proxyIP, username, password string) authorizer.AuthResult {
 	credentials := username + ":" + password
-	if c.allAccess[credentials] {
+	if credentials == c.checkerUser || c.allAccess[credentials] {
+		return authorizer.SystemUserResult
+	} else if credentials == c.backconnectUser {
+		return authorizer.BackconnectResult
+	}
+	if packageID := c.ipToCredentials[proxyIP][credentials]; packageID != 0 {
 		return authorizer.AuthResult{
-			OK:          true,
-			SystemUser:  credentials != c.BackconnectUser,
-			Backconnect: credentials == c.BackconnectUser,
-			PackageID:   0,
-			UserID:      0,
+			OK:        true,
+			PackageID: packageID,
+			UserID:    c.packageIDsToUserIDs[packageID],
 		}
 	}
-	if packageID, ok := c.ipToCredentials[proxyIP][credentials]; ok {
-		return authorizer.AuthResult{
-			OK:          true,
-			SystemUser:  false,
-			Backconnect: false,
-			PackageID:   packageID,
-			UserID:      c.packageIDsToUserIDs[packageID],
-		}
-	}
-	return authorizer.BadAuth
+	return authorizer.BadAuthResult
 }
 
 func (c *Config) AllAccessAuth(username, password string) bool {

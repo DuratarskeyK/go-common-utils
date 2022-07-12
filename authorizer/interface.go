@@ -9,7 +9,9 @@ type AuthResult struct {
 	UserID      int
 }
 
-var BadAuth = AuthResult{OK: false}
+var BadAuthResult = AuthResult{}
+var SystemUserResult = AuthResult{OK: true, SystemUser: true}
+var BackconnectResult = AuthResult{OK: true, Backconnect: true}
 
 type Authorizer interface {
 	IPAuth(proxyIP, userIP string) AuthResult

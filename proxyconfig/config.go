@@ -11,9 +11,8 @@ import (
 type Config struct {
 	ServerName string
 
-	BackconnectUser string
-	CheckerUser     string
-
+	backconnectUser     string
+	checkerUser         string
 	allAccess           map[string]bool
 	ipToCredentials     map[string]map[string]int
 	ipToAllowedIPs      map[string]map[string]int
@@ -59,8 +58,8 @@ func (c *Config) UnmarshalJSON(data []byte) error {
 
 	c.ServerName = cj.ServerName
 
-	c.BackconnectUser = cj.BackconnectUser
-	c.CheckerUser = cj.CheckerUser
+	c.backconnectUser = cj.BackconnectUser
+	c.checkerUser = cj.CheckerUser
 
 	c.ipToCredentials = cj.IPToCredentials
 	c.ipToAllowedIPs = cj.IPToAllowedIPs
