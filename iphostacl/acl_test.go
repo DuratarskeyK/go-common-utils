@@ -3,7 +3,7 @@ package iphostacl
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -35,14 +35,14 @@ func (t testItem) String() string {
 }
 
 func TestAllowedIP(t *testing.T) {
-	jsonStr, err := ioutil.ReadFile("./testdata/acl.json")
+	jsonStr, err := os.ReadFile("./testdata/acl.json")
 	if err != nil {
 		t.Fatalf("ReadFile error: %s", err)
 	}
 	var acl Acl
 	json.Unmarshal(jsonStr, &acl)
 	var testData []testItem
-	jsonStr, err = ioutil.ReadFile("./testdata/acl_test_cases.json")
+	jsonStr, err = os.ReadFile("./testdata/acl_test_cases.json")
 	if err != nil {
 		t.Fatalf("ReadFile error: %s", err)
 	}

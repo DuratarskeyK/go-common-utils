@@ -2,7 +2,7 @@ package iphostacl
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -12,7 +12,7 @@ func TestSubnetList(t *testing.T) {
 		t.Errorf("Empty list should not contain any ips")
 	}
 
-	jsonData, err := ioutil.ReadFile("./testdata/subnet_list.json")
+	jsonData, err := os.ReadFile("./testdata/subnet_list.json")
 	if err != nil {
 		t.Fatalf("ReadFile error: %s", err)
 	}
@@ -44,7 +44,7 @@ func TestSubnetList(t *testing.T) {
 var result bool
 
 func BenchmarkSubnetList(b *testing.B) {
-	jsonData, err := ioutil.ReadFile("./testdata/subnet_list.json")
+	jsonData, err := os.ReadFile("./testdata/subnet_list.json")
 	if err != nil {
 		b.Fatalf("ReadFile error: %s", err)
 	}

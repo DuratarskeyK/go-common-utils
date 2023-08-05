@@ -2,20 +2,20 @@ package iphostacl
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 )
 
 func TestSubdomainTrie(t *testing.T) {
-	jsonData, err := ioutil.ReadFile("./testdata/subdomain_trie.json")
+	jsonData, err := os.ReadFile("./testdata/subdomain_trie.json")
 	if err != nil {
 		t.Fatalf("ReadFile error: %s", err)
 	}
 	var trie subdomainTrie
 	json.Unmarshal(jsonData, &trie)
 	subdomains := []string{}
-	jsonData, err = ioutil.ReadFile("./testdata/subdomain_trie_cases.json")
+	jsonData, err = os.ReadFile("./testdata/subdomain_trie_cases.json")
 	if err != nil {
 		t.Fatalf("ReadFile error: %s", err)
 	}
@@ -60,14 +60,14 @@ func TestSubdomainTrie(t *testing.T) {
 var trieResult bool
 
 func BenchmarkTrie(b *testing.B) {
-	jsonData, err := ioutil.ReadFile("./testdata/subdomain_trie.json")
+	jsonData, err := os.ReadFile("./testdata/subdomain_trie.json")
 	if err != nil {
 		b.Fatalf("ReadFile error: %s", err)
 	}
 	var trie subdomainTrie
 	json.Unmarshal(jsonData, &trie)
 	subdomains := []string{}
-	jsonData, err = ioutil.ReadFile("./testdata/subdomain_trie_cases.json")
+	jsonData, err = os.ReadFile("./testdata/subdomain_trie_cases.json")
 	if err != nil {
 		b.Fatalf("ReadFile error: %s", err)
 	}

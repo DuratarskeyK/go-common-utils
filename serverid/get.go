@@ -2,7 +2,7 @@ package serverid
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -32,7 +32,7 @@ func tryGet(idAddr, apiKey string) int {
 		return 0
 	}
 
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return 0
 	}
