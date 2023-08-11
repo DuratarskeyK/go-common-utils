@@ -40,6 +40,7 @@ func TestAllowedIP(t *testing.T) {
 		t.Fatalf("ReadFile error: %s", err)
 	}
 	var acl Acl
+	acl.ServerID = 42
 	json.Unmarshal(jsonStr, &acl)
 	var testData []testItem
 	jsonStr, err = os.ReadFile("./testdata/acl_test_cases.json")

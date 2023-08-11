@@ -123,10 +123,10 @@ func (acl *Acl) allowedIPBackconnectLevel(pkgID, userID int, resolvedIP uint32) 
 	}
 	sAcl = acl.servers.backconnect
 	if sAcl.allowed.ipPresent(resolvedIP) {
-		return true, LevelServerBackconnect
+		return true, LevelServerProxy
 	}
 	if sAcl.banned.ipPresent(resolvedIP) {
-		return false, LevelServerBackconnect
+		return false, LevelServerProxy
 	}
 
 	global := acl.globalBlacklist.all

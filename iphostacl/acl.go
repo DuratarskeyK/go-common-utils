@@ -23,6 +23,8 @@ type globalBanlist struct {
 }
 
 type Acl struct {
+	ServerID int
+
 	packages        *packagesAcl
 	users           map[int]*caseAcl
 	servers         *caseAcl

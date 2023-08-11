@@ -111,10 +111,10 @@ func (acl *Acl) allowedDomainBackconnectLevel(pkgID, userID int, host string) (b
 	}
 	sAcl = acl.servers.backconnect
 	if sAcl.allowed.domainPresent(host) {
-		return true, LevelServerBackconnect
+		return true, LevelServerProxy
 	}
 	if sAcl.banned.domainPresent(host) {
-		return false, LevelServerBackconnect
+		return false, LevelServerProxy
 	}
 
 	global := acl.globalBlacklist.all

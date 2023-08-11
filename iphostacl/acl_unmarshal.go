@@ -30,7 +30,7 @@ type globalBanlistJSON struct {
 type aclJSON struct {
 	Packages        *packagesAclJSON        `json:"packages"`
 	Users           map[string]*caseAclJSON `json:"users"`
-	Servers         *caseAclJSON            `json:"servers"`
+	Servers         map[string]*caseAclJSON `json:"servers"`
 	GlobalBlacklist *globalBanlistJSON      `json:"global"`
 }
 
@@ -77,20 +77,34 @@ func (acl *Acl) UnmarshalJSON(data []byte) error {
 			},
 		}
 	}
-	acl.servers = &caseAcl{
-		all: &singleAcl{
-			banned:  v.Servers.All.Banned,
-			allowed: v.Servers.All.Allowed,
-		},
-		proxy: &singleAcl{
-			banned:  v.Servers.Proxy.Banned,
-			allowed: v.Servers.Proxy.Allowed,
-		},
-		backconnect: &singleAcl{
-			banned:  v.Servers.Backconnect.Banned,
-			allowed: v.Servers.Backconnect.Allowed,
-		},
+
+	sidStr := strconv.Itoa(acl.ServerID)
+	server, ok := v.Servers[sidStr]
+	if ok {
+		acl.servers = &caseAcl{
+			all: &singleAcl{
+				banned:  server.All.Banned,
+				allowed: server.All.Allowed,
+			},
+			proxy: &singleAcl{
+				banned:  server.Proxy.Banned,
+				allowed: server.Proxy.Allowed,
+			},
+			backconnect: &singleAcl{
+				banned:  server.Backconnect.Banned,
+				allowed: server.Backconnect.Allowed,
+			},
+		}
+	} else {
+		c := &ipHostSet{empty: true}
+		sAcl := &singleAcl{allowed: c, banned: c}
+		acl.servers = &caseAcl{
+			all:         sAcl,
+			proxy:       sAcl,
+			backconnect: sAcl,
+		}
 	}
+
 	acl.globalBlacklist = &globalBanlist{
 		all:         v.GlobalBlacklist.All,
 		proxy:       v.GlobalBlacklist.Proxy,
